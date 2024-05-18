@@ -35,7 +35,10 @@ function generateTypes() {
     const cp = spawn(
       process.platform === 'win32' ? 'npm.cmd' : 'npm',
       ['run', 'types'],
-      { stdio: 'inherit' },
+      {
+				stdio: 'inherit',
+				shell: true
+			},
     )
     cp.on('exit', code => {
       !code && console.log('[types]', 'declaration generated')

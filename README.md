@@ -58,9 +58,21 @@ multiple(
      */
     config: string
     /**
+     * vite-plugin-laravel hot file path.
+     */
+    hotFile?: string
+    /**
      * Explicitly specify the run command.
      */
     command?: 'build' | 'serve'
+    /*
+     * Called before serve is stopping.
+     */
+    closed?: (
+      app: AppConfig,
+      config: UserConfig,
+      server: ViteDevServer
+    ) => void
   }[],
   options: {
     /**

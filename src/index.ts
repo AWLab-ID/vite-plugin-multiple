@@ -1,8 +1,10 @@
 import path from 'node:path'
+import fs from 'node:fs'
 import {
   type Plugin,
   type ResolvedConfig,
   type UserConfig,
+  type ViteDevServer,
   build as viteBuild,
   createServer,
   loadConfigFromFile,
@@ -12,58 +14,76 @@ import {
 export type AppConfig = Parameters<typeof multiple>[0][number]
 
 export default function multiple(
-  apps: {
-    /**
-     * Human friendly name of your entry point.
-     */
-    name: string
-    /**
-     * Vite config file path.
-     */
-    config: string
-    /**
-     * Explicitly specify the run command.
-     */
-    command?: 'build' | 'serve'
-  }[],
-  options: {
-    /**
-     * Called when all builds are complete.
-     */
-    callback?: () => void,
-  } = {},
+	apps: {
+		/**
+		 * Human friendly name of your entry point.
+		 */
+		name: string;
+		/**
+		 * Vite config file path.
+		 */
+		config: string;
+		/**
+		 * vite-plugin-laravel hot file path.
+		 */
+		hotFile?: string;
+		/**
+		 * Explicitly specify the run command.
+		 */
+		command?: "build" | "serve";
+		/*
+		 * Called before serve is stopping.
+		 */
+		closed?: (
+			app: AppConfig,
+			config: UserConfig,
+			server: ViteDevServer
+		) => void;
+		/*
+		 * Exit Handlers Bound each app
+		 */
+		exitHandlersBound?: boolean;
+	}[],
+	options: {
+		/**
+		 * Called when all builds are complete.
+		 */
+		callback?: () => void;
+	} = {}
 ): Plugin {
-  let config: ResolvedConfig
+	let config: ResolvedConfig;
 
-  return {
-    name: 'vite-plugin-multiple',
-    config(config) {
-      config.clearScreen ??= false
-    },
-    async configResolved(_config) {
-      config = _config
-    },
-    configureServer(server) {
-      if (server.httpServer) {
-        server.httpServer.once('listening', () => run(config, apps, 'serve').then(() => options.callback?.()))
-      } else {
-        run(config, apps, 'serve').then(() => options.callback?.())
-      }
-    },
-    async closeBundle() {
-      if (config.command === 'build') {
-        await run(config, apps, config.command)
-        options.callback?.()
-      }
-    },
-  }
+	return {
+		name: "vite-plugin-multiple",
+		config(config) {
+			config.clearScreen ??= false;
+		},
+		async configResolved(_config) {
+			config = _config;
+		},
+		configureServer(server) {
+			if (server.httpServer) {
+				server.httpServer.once("listening", () =>
+					run(config, apps, "serve").then(() => options.callback?.())
+				);
+			} else {
+				run(config, apps, "serve").then(() => options.callback?.());
+			}
+		},
+		async closeBundle() {
+			if (config.command === "build") {
+				await run(config, apps, config.command);
+				options.callback?.();
+			}
+		},
+	};
 }
 
 export async function resolveConfig(config: ResolvedConfig, app: AppConfig): Promise<UserConfig> {
   const { config: userConfig } = (await loadConfigFromFile({
     command: app.command!,
     mode: config.mode,
-    ssrBuild: !!config.build?.ssr,
+    isSsrBuild: !!config.build?.ssr,
   }, app.config)) ?? { path: '', config: {}, dependencies: [] };
   const defaultConfig: UserConfig = {
     root: config.root,
@@ -98,6 +118,23 @@ export async function run(
         configFile: false,
         ...userConfig,
       })
+
+      if (!app.exitHandlersBound) {
+				const onClose = () => {
+					app.closed?.(app, userConfig, viteDevServer);
+
+					//TODO make available for laravel-vite-plugin to remove hot file on command close/exit
+					if (app.hotFile && fs.existsSync(app.hotFile)) {
+						fs.rmSync(app.hotFile);
+					}
+				};
+				process.on("exit", onClose);
+				process.on("SIGINT", () => process.exit());
+				process.on("SIGTERM", () => process.exit());
+				process.on("SIGHUP", () => process.exit());
+				app.exitHandlersBound = true;
+			}
+
       await viteDevServer.listen()
       viteDevServer.printUrls()
     } else {

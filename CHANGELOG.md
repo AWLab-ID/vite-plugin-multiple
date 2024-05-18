@@ -1,3 +1,10 @@
+# ChangeLog
+
+## 0.2.1 (2024-05-18)
+
+- 59426c12 feat: support event on close/exit
+- 3dc79256 fix: make spawn use shell on windows to generateTypes
+
 ## 0.2.0 (2023-02-18)
 
 - 221cb24 feat: support specify run command

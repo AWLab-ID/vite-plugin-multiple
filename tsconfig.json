@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
-    "outDir": "types",
+    "outDir": "dist/types",
     "emitDeclarationOnly": true
   },
   "include": ["src"]

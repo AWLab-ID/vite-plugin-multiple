@@ -8,7 +8,7 @@ export default defineConfig({
   build: {
     emptyOutDir: false,
     minify: false,
-    outDir: '',
+    outDir: 'dist',
     target: 'node14',
     lib: {
       entry: path.join(__dirname, 'src/index.ts'),

@@ -3,12 +3,12 @@
 	"version": "0.2.1",
 	"description": "Allow multiple Vite to run simultaneously",
 	"type": "module",
-	"main": "index.js",
+	"main": "./dist/index.js",
 	"types": "types",
 	"exports": {
 		".": {
-			"import": "./index.js",
-			"require": "./index.cjs"
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
 		}
 	},
 	"repository": "https://github.com/awlab-id/vite-plugin-multiple.git",
@@ -29,9 +29,9 @@
 		"vitest": "^1.6.0"
 	},
 	"files": [
-		"types",
-		"index.cjs",
-		"index.js"
+		"./dist/types",
+		"./dist/index.cjs",
+		"./dist/index.js"
 	],
 	"keywords": [
 		"vite",
